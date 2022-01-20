@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Hero } from './hero';
-import { HEROES } from './mock-heroes';
 import { Observable, of } from 'rxjs';
 import { MessageService } from './message.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -36,6 +35,19 @@ export class HeroService {
       catchError(this.handleError<Hero>(`getHero id=${id}`))
     );
   }
+  /* GET heroes whose name contains search term */
+  searchHeroes(term: string): Observable<Hero[]> {
+    if (!term.trim()) {
+      // if not search term, return empty hero array.
+      return of([]);
+    }
+    return this.http.get<Hero[]>(`${this.heroesUrl}/?name=${term}`).pipe(
+      tap(x => x.length ?
+        this.log(`found heroes matching "${term}"`) :
+        this.log(`no heroes matching "${term}"`)),
+      catchError(this.handleError<Hero[]>('searchHeroes', []))
+    );
+  }
 
 
   /** PUT: update the hero on the server */
@@ -56,30 +68,17 @@ export class HeroService {
   }
 
   /** DELETE: delete the hero from the server */
-deleteHero(id: number): Observable<Hero> {
-  const url = `${this.heroesUrl}/${id}`;
+  deleteHero(id: number): Observable<Hero> {
+    const url = `${this.heroesUrl}/${id}`;
 
-  return this.http.delete<Hero>(url, this.httpOptions).pipe(
-    tap(_ => this.log(`deleted hero id=${id}`)),
-    catchError(this.handleError<Hero>('deleteHero'))
-  );
-}
-
-
-  /* GET heroes whose name contains search term */
-  searchHeroes(term: string): Observable<Hero[]> {
-    if (!term.trim()) {
-      // if not search term, return empty hero array.
-      return of([]);
-    }
-    return this.http.get<Hero[]>(`${this.heroesUrl}/?name=${term}`).pipe(
-      tap(x => x.length ?
-        this.log(`found heroes matching "${term}"`) :
-        this.log(`no heroes matching "${term}"`)),
-      catchError(this.handleError<Hero[]>('searchHeroes', []))
+    return this.http.delete<Hero>(url, this.httpOptions).pipe(
+      tap(_ => this.log(`deleted hero id=${id}`)),
+      catchError(this.handleError<Hero>('deleteHero'))
     );
   }
-  
+
+
+
    /**
    * Handle Http operation that failed.
    * Let the app continue.
